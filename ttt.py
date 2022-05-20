@@ -1,5 +1,4 @@
-# save in git
-
+# TESTING
 import pygame
 pygame.init()
 
