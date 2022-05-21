@@ -1,162 +1,164 @@
-import pygame
+import pygame, sys
+import numpy as np
 pygame.init()
 
-WIDTH = 900
-HEIGHT = 800
+WIDTH = 600
+HEIGHT = 600
+BOX_SIZE = 200
+RADIUS = 60
+OFF_SET = 50
 
 # colors
-black = (0,0,0)
-white = (255,255,255)
-grey = (128,128,128)
-dark_grey = (50,50,50)
-green = (0,255,0)
-gold = (212,175,55)
-blue = (0,255,255)
+BLACK = (0,0,0)
+WHITE = (255,255,255)
+RED = (255,0,0)
+BLUE = (0,255,0)
+GREEN = (0,0,255)
+SILVER = (192,192,192)
+GOLD = (218,165,32)
+
+P1_COLOR = GOLD
+P2_COLOR = SILVER
+
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption('Tic Tac Toe')
+screen.fill(BLACK)
+
+# 2D array game board
+board = np.zeros((3,3))
+
+def create_grid():
+    # horizontal lines
+    pygame.draw.line(screen, WHITE, (0,200), (600,200), 10)
+    pygame.draw.line(screen, WHITE, (0,400), (600,400), 10)
+
+    # vertical lines
+    pygame.draw.line(screen, WHITE, (200,0), (200,600), 10)
+    pygame.draw.line(screen, WHITE, (400,0), (400,600), 10)
 
 
-screen = pygame.display.set_mode([WIDTH,HEIGHT])
-pygame.display.set_caption('Tik Tac Toe')
-label_font = pygame.font.Font('freesansbold.ttf', 60)
+def fill_box(row, col, player):
+    board[row][col] = player
+
+def box_empty(row,col):
+    return board[row][col] == 0
+
+def board_full():
+    for row in range(3):
+        for col in range(3):
+            if board[row][col] == 0:
+                return False
+    return True
+
+def show_x_o():
+    for row in range(3):
+        for col in range(3):
+            # put an O on the board
+            if board[row][col] == -1:
+                pygame.draw.circle(screen, P2_COLOR, (int(col * 200 + 100),int(row * 200 + 100)), RADIUS, 10)
+            # put an X on the board
+            elif board[row][col] == 1:
+                pygame.draw.line(screen, P1_COLOR, (col * BOX_SIZE + OFF_SET, row * BOX_SIZE + BOX_SIZE - OFF_SET), (col * BOX_SIZE + BOX_SIZE - OFF_SET, row * BOX_SIZE + OFF_SET), 10)
+                pygame.draw.line(screen, P1_COLOR, (col * BOX_SIZE + OFF_SET, row * BOX_SIZE + OFF_SET), (col * BOX_SIZE + BOX_SIZE - OFF_SET, row * BOX_SIZE + BOX_SIZE - OFF_SET), 10)
 
 
-fps = 60
-timer = pygame.time.Clock()
-# track which boxes have been cliked, -1 means NOT clicked, +1 means clicked
-clicked = [[-1 for _ in range(3)] for _ in range(3)]
-box_taken = [[False for _ in range(3)] for _ in range(3)]
-board = [[None for _ in range(3)] for _ in range(3)]
+def game_result(player):
+    # check for win in columns
+    for col in range(3):
+        if board[0][col] == player and board[1][col] == player and board[2][col] == player:
+            show_col_win(col,player)
+            return True
+
+    # check for win in rows
+    for row in range(3):
+        if board[row][0] == player and board[row][1] == player and board[row][2] == player:
+            show_row_win(row,player)
+            return True
+
+    # check for win in diagonal from SW to NE
+    if board[2][0] == player and board[1][1] == player and board[0][2] == player:
+        diag_win_SW_NE(player)
+        return True
+
+    # check for win in diagonal from NW to SE
+    if board[0][0] == player and board[1][1] == player and board[2][2] == player:
+        diag_win_NW_SE(player)
+        return True
+
+# check columns for win
+def show_col_win(col, player):
+    x_coord = col * 200 + 100
+    if player == 1:
+        color = P1_COLOR
+    else:
+        color = P2_COLOR
+    pygame.draw.line(screen, color, (x_coord, 0), (x_coord, HEIGHT), 20)
+
+# check rows for win
+def show_row_win(row, player):
+    y_coord = row * 200 + 100
+    if player == 1:
+        color = P1_COLOR
+    else:
+        color = P2_COLOR
+    pygame.draw.line(screen, color, (0, y_coord), (WIDTH, y_coord), 20)
+
+# check diagonal from South-West corner to North-East corner
+def diag_win_SW_NE(player):
+    if player == 1:
+        color = P1_COLOR
+    else:
+        color = P2_COLOR
+    pygame.draw.line(screen, color, (0, HEIGHT), (WIDTH, 0), 20)
+
+# check diagonal from North-West corner to South-East corner
+def diag_win_NW_SE(player):
+    if player == 1:
+        color = P1_COLOR
+    else:
+        color = P2_COLOR
+    pygame.draw.line(screen, color, (0, 0), (WIDTH, HEIGHT), 20)
+
+def new_game():
+    screen.fill(BLACK)
+    create_grid()
+    for row in range(3):
+        for col in range(3):
+            board[row][col] = 0
 
 
 
-def draw_grid(clicks):
-    boxes = [] # store rectangle object and its coordinates
-    # draw game board
-    for i in range(3):
-        for j in range(3):
-            rect = pygame.draw.rect(screen,grey,[i * 300,j * 200,300,HEIGHT-600],5)
-            boxes.append((rect, (i,j))) # store rectangle object and its coordinates
-            # text box = X (1) or O (0) or Blank (-1)
-            if (clicks[j][i] == -1):
-                text = label_font.render('', True, blue)
-            elif (clicks[j][i] == 1):
-                text = label_font.render('X', True, blue)
-            else:
-                text = label_font.render('O', True, blue)
-            screen.blit(text, ((i*300) +125,(j*200) +75))
+create_grid()
+player = 1  # 1 = X, -1 = O, X's start first
+game_over = False
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            sys.exit()
 
-    return boxes
+        if event.type == pygame.MOUSEBUTTONDOWN and not game_over:
+            x_coord = event.pos[0]
+            y_coord = event.pos[1]
 
-def check_rows():
-    for i in range(len(board)):
-        if (board[i][0] != None):
-            if (board[i][0] == board[i][1] and board[i][1] == board[i][2]):
-                winner = f"{board[i][0]} WINS!"
-                return (True,winner)
-    return (False,"")
+            cur_row = int(y_coord // BOX_SIZE) # 200 is the HEIGHT and WIDTH of each box
+            cur_col = int(x_coord // BOX_SIZE)
 
-def check_cols():
-    for i in range(len(board)):
-        if (board[0][i] != None):
-            if (board[0][i] == board[1][i] and board[1][i] == board[2][i]):
-                winner = f"{board[0][i]} WINS!"
-                return (True,winner)
-    return (False,"")
+            if box_empty(cur_row, cur_col):
+                if player == 1:
+                    fill_box(cur_row, cur_col, 1)
+                elif player == -1:
+                    fill_box(cur_row, cur_col, -1)
 
-def check_diagonals():
-    # top left to bottom right
-    if (board[0][0] != None):
-        if (board[0][0] == board[1][1] and board[1][1] == board[2][2]):
-            winner = f"{board[0][0]} WINS!"
-            return (True,winner)
+                if game_result(player):
+                    game_over = True
+                show_x_o()
+                player *= -1 # switch player
 
-    # bottom left to top right
-    if (board[2][0] != None):
-        if (board[2][0] == board[1][1] and board[1][1] == board[0][2]):
-            winner = f"{board[2][0]} WINS!"
-            return (True,winner)
-    return (False,"")
+        # if the user hits the 'n' key on keyboard, a new game will start
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_n:
+                new_game()
+                game_over = False
+                player = 1
 
-def draw():
-    # check if all blocks are filled and there is NO winner, game is a draw
-    num_empty_slots = 9
-    for i in range(3):
-        for j in range(3):
-            if clicked[i][j] != -1: # still empty box
-                num_empty_slots -= 1
-    if num_empty_slots == 0:
-        winner = "The Game is a Draw"
-        return (True, winner)
-    return (False,"")
-
-def game_over():
-    # check if player has won
-    row_result = check_rows()
-    if row_result[0]:
-        return row_result
-
-    col_result = check_cols()
-    if row_result[0]:
-        return row_result
-
-    diag_result = check_diagonals()
-    if diag_result[0]:
-        return diag_result
-
-    draw_result = draw()
-    if draw_result[0]:
-        return draw_result
-
-    return (False,"")
-
-
-def start():
-    # track player turn, X's move first
-    x = True
-    run = True
-    while run:
-        timer.tick(fps)
-        screen.fill(black)
-        boxes = draw_grid(clicked)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-            # CHECK IF GAME OVER
-            result = game_over()
-            if (result[0]):
-                # game is over, stop updating board
-                # TODO figure out how to end game 
-                if event.type == pygame.QUIT:
-                    run = False
-
-
-            else:
-                # EVENT HANDLER BOXES
-                if event.type == pygame.MOUSEBUTTONUP:
-                    for i in range(len(boxes)):
-                        # get coordinates of box clicked
-                        coords = boxes[i][1]
-                        # check if box was clicked, check player turn X or O, check the box isn't already taken
-                        if boxes[i][0].collidepoint(event.pos) and x and not box_taken[coords[1]][coords[0]]:
-                            # update the value of the box to reflect the click
-                            clicked[coords[1]][coords[0]] = 1
-                            # indicate the box has been taken
-                            box_taken[coords[1]][coords[0]] = True
-                            board[coords[1]][coords[0]] = 'X'
-                            x = False   # X made move, change player to O
-                        elif boxes[i][0].collidepoint(event.pos) and not x and not box_taken[coords[1]][coords[0]]:
-                            clicked[coords[1]][coords[0]] = 0
-                            box_taken[coords[1]][coords[0]] = True
-                            board[coords[1]][coords[0]] = 'O'
-                            x = True
-
-        pygame.display.flip()
-
-
-def main():
-    start()
-    pygame.quit()
-
-
-if __name__ == '__main__':
-    main()
+    pygame.display.update()
