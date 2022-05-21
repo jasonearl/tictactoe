@@ -2,24 +2,30 @@ import pygame, sys
 import numpy as np
 pygame.init()
 
+# board dimesions
 WIDTH = 600
 HEIGHT = 600
+
+# each box is 200x200
 BOX_SIZE = 200
+
+# to display O's in boxes
 RADIUS = 60
+
+# to make sure X's dont go to edge of box
 OFF_SET = 50
 
 # colors
 BLACK = (0,0,0)
 WHITE = (255,255,255)
-RED = (255,0,0)
-BLUE = (0,255,0)
-GREEN = (0,0,255)
 SILVER = (192,192,192)
 GOLD = (218,165,32)
 
-P1_COLOR = GOLD
-P2_COLOR = SILVER
+# set the color for the X's and O's
+X_COLOR = GOLD
+Y_COLOR = SILVER
 
+# create the pop-up window to play game
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Tic Tac Toe')
 screen.fill(BLACK)
@@ -37,31 +43,28 @@ def create_grid():
     pygame.draw.line(screen, WHITE, (400,0), (400,600), 10)
 
 
+# place a 1 or -1 on the board, depending on the player
 def fill_box(row, col, player):
     board[row][col] = player
 
+# check if the box doesn't already have an X (1) or an O (-1)
 def box_empty(row,col):
     return board[row][col] == 0
 
-def board_full():
-    for row in range(3):
-        for col in range(3):
-            if board[row][col] == 0:
-                return False
-    return True
-
+# display an X or an O in the correct box
 def show_x_o():
     for row in range(3):
         for col in range(3):
             # put an O on the board
             if board[row][col] == -1:
-                pygame.draw.circle(screen, P2_COLOR, (int(col * 200 + 100),int(row * 200 + 100)), RADIUS, 10)
+                pygame.draw.circle(screen, Y_COLOR, (int(col * 200 + 100),int(row * 200 + 100)), RADIUS, 10)
             # put an X on the board
             elif board[row][col] == 1:
-                pygame.draw.line(screen, P1_COLOR, (col * BOX_SIZE + OFF_SET, row * BOX_SIZE + BOX_SIZE - OFF_SET), (col * BOX_SIZE + BOX_SIZE - OFF_SET, row * BOX_SIZE + OFF_SET), 10)
-                pygame.draw.line(screen, P1_COLOR, (col * BOX_SIZE + OFF_SET, row * BOX_SIZE + OFF_SET), (col * BOX_SIZE + BOX_SIZE - OFF_SET, row * BOX_SIZE + BOX_SIZE - OFF_SET), 10)
+                pygame.draw.line(screen, X_COLOR, (col * BOX_SIZE + OFF_SET, row * BOX_SIZE + BOX_SIZE - OFF_SET), (col * BOX_SIZE + BOX_SIZE - OFF_SET, row * BOX_SIZE + OFF_SET), 10)
+                pygame.draw.line(screen, X_COLOR, (col * BOX_SIZE + OFF_SET, row * BOX_SIZE + OFF_SET), (col * BOX_SIZE + BOX_SIZE - OFF_SET, row * BOX_SIZE + BOX_SIZE - OFF_SET), 10)
 
 
+# check to see if either player has won
 def game_result(player):
     # check for win in columns
     for col in range(3):
@@ -75,50 +78,51 @@ def game_result(player):
             show_row_win(row,player)
             return True
 
-    # check for win in diagonal from SW to NE
+    # check for win in diagonal from South-West to North-East
     if board[2][0] == player and board[1][1] == player and board[0][2] == player:
         diag_win_SW_NE(player)
         return True
 
-    # check for win in diagonal from NW to SE
+    # check for win in diagonal from North-West to Soutth-East
     if board[0][0] == player and board[1][1] == player and board[2][2] == player:
         diag_win_NW_SE(player)
         return True
 
-# check columns for win
+# place a line to show the column win
 def show_col_win(col, player):
     x_coord = col * 200 + 100
     if player == 1:
-        color = P1_COLOR
+        color = X_COLOR
     else:
-        color = P2_COLOR
+        color = Y_COLOR
     pygame.draw.line(screen, color, (x_coord, 0), (x_coord, HEIGHT), 20)
 
-# check rows for win
+# place a line to show the row win
 def show_row_win(row, player):
     y_coord = row * 200 + 100
     if player == 1:
-        color = P1_COLOR
+        color = X_COLOR
     else:
-        color = P2_COLOR
+        color = Y_COLOR
     pygame.draw.line(screen, color, (0, y_coord), (WIDTH, y_coord), 20)
 
-# check diagonal from South-West corner to North-East corner
+# place a line to show the diagonal South-West to North-East win
 def diag_win_SW_NE(player):
     if player == 1:
-        color = P1_COLOR
+        color = X_COLOR
     else:
-        color = P2_COLOR
+        color = Y_COLOR
     pygame.draw.line(screen, color, (0, HEIGHT), (WIDTH, 0), 20)
 
-# check diagonal from North-West corner to South-East corner
+# place a line to show the diagonal North-West to Soutth-East win
 def diag_win_NW_SE(player):
     if player == 1:
-        color = P1_COLOR
+        color = X_COLOR
     else:
-        color = P2_COLOR
+        color = Y_COLOR
     pygame.draw.line(screen, color, (0, 0), (WIDTH, HEIGHT), 20)
 
+# when the user hits the 'n' key on the keyboard, start a new game
 def new_game():
     screen.fill(BLACK)
     create_grid()
